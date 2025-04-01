@@ -34,7 +34,15 @@ def create_app():
         
         with app.app_context():
             logger.debug("Creating database tables...")
+            
+            # In Render environment, drop all tables and recreate
+            if os.environ.get('RENDER'):
+                logger.debug("Render environment detected - dropping all tables")
+                db.drop_all()
+                logger.debug("Tables dropped successfully")
+            
             db.create_all()
+            logger.debug("Tables created successfully")
             
             # Initialize caregivers if none exist
             if Caregiver.query.count() == 0:
@@ -49,6 +57,7 @@ def create_app():
                 logger.debug("Adding initial schedule...")
                 # Get all caregivers
                 caregivers = {c.name: c for c in Caregiver.query.all()}
+                logger.debug(f"Found caregivers: {list(caregivers.keys())}")
                 
                 # Get the Monday of current week
                 today = datetime.now().date()
@@ -106,6 +115,7 @@ def create_app():
                 days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
                 for i, day in enumerate(days):
                     date = monday + timedelta(days=i)
+                    logger.debug(f"Adding shifts for {day}")
                     for shift_type, caregiver_name in schedule[day].items():
                         if caregiver_name in caregivers:
                             shift = Shift(
@@ -114,9 +124,14 @@ def create_app():
                                 caregiver_id=caregivers[caregiver_name].id
                             )
                             db.session.add(shift)
+                            logger.debug(f"Added shift: {day} - {shift_type} - {caregiver_name}")
+                        else:
+                            logger.warning(f"Caregiver {caregiver_name} not found in database")
                 
                 db.session.commit()
                 logger.debug("Initial schedule added successfully")
+            else:
+                logger.debug(f"Found {Caregiver.query.count()} existing caregivers, skipping initialization")
         
         # Register blueprints
         from .routes import views
