@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
 import logging
+from datetime import datetime, timedelta
 
 # Configure logging
 logging.basicConfig(
@@ -19,7 +20,7 @@ def create_app():
         app = Flask(__name__)
         
         # Load configuration
-        from .config import Config
+        from .config import Config, ShiftConfig
         app.config.from_object(Config)
         
         # Ensure instance directory exists
@@ -38,12 +39,84 @@ def create_app():
             # Initialize caregivers if none exist
             if Caregiver.query.count() == 0:
                 logger.debug("Initializing caregivers...")
-                from .config import ShiftConfig
                 for name in ShiftConfig.CAREGIVERS:
                     caregiver = Caregiver(name=name)
                     db.session.add(caregiver)
                 db.session.commit()
                 logger.debug(f"Added {len(ShiftConfig.CAREGIVERS)} caregivers")
+                
+                # Add initial schedule
+                logger.debug("Adding initial schedule...")
+                # Get all caregivers
+                caregivers = {c.name: c for c in Caregiver.query.all()}
+                
+                # Get the Monday of current week
+                today = datetime.now().date()
+                monday = today - timedelta(days=today.weekday())
+                
+                # Initial schedule data
+                schedule = {
+                    'Monday': {
+                        'A': 'Maria B',
+                        'G1': 'Teontae',
+                        'B': 'Amanda',
+                        'C': 'Michelle'
+                    },
+                    'Tuesday': {
+                        'A': 'Fatima',
+                        'G1': 'Mariah G',
+                        'B': 'Kisha',
+                        'C': 'Michelle'
+                    },
+                    'Wednesday': {
+                        'A': 'Maria B',
+                        'G1': 'Mariah G',
+                        'B': 'Kisha',
+                        'C': 'Amanda'
+                    },
+                    'Thursday': {
+                        'A': 'Fatima',
+                        'G1': 'Maria B',
+                        'B': 'Kisha',
+                        'C': 'Amanda'
+                    },
+                    'Friday': {
+                        'A': 'Maria B',
+                        'G1': 'Fatima',
+                        'B': 'Kisha',
+                        'C': 'Amanda'
+                    },
+                    'Saturday': {
+                        'A': 'Mariah G',
+                        'G2': 'Teontae',
+                        'G1': 'Fatima',
+                        'B': 'Michelle',
+                        'C': 'Kisha'
+                    },
+                    'Sunday': {
+                        'A': 'Mariah G',
+                        'G2': 'Teontae',
+                        'G1': 'Fatima',
+                        'B': 'Michelle',
+                        'C': 'Amanda'
+                    }
+                }
+                
+                # Add shifts to database
+                days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                for i, day in enumerate(days):
+                    date = monday + timedelta(days=i)
+                    for shift_type, caregiver_name in schedule[day].items():
+                        if caregiver_name in caregivers:
+                            shift = Shift(
+                                date=date,
+                                shift_type=shift_type,
+                                caregiver_id=caregivers[caregiver_name].id
+                            )
+                            db.session.add(shift)
+                
+                db.session.commit()
+                logger.debug("Initial schedule added successfully")
         
         # Register blueprints
         from .routes import views

@@ -33,7 +33,9 @@ class ShiftConfig:
         'G2': {'name': 'G2 Shift', 'time': '9:00 AM - 5:00 PM', 'start_hour': 9, 'duration': 8, 'color': '#FFB6C1'}
     }
     
-    CAREGIVERS = ['CG1', 'CG2', 'CG3', 'CG4', 'CG5', 'CG6', 'CG7', 'CG8']
+    # Updated list of actual caregivers
+    CAREGIVERS = ['Maria B', 'Fatima', 'Mariah G', 'Teontae', 'Amanda', 'Michelle', 'Kisha']
+    
     SHIFTS_PER_WEEK = 5  # Each caregiver works 5 days
     HOURS_PER_SHIFT = 8  # Each shift is 8 hours
     HOURS_PER_WEEK = 40  # Total weekly hours per caregiver 
