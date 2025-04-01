@@ -22,6 +22,9 @@ def create_app():
         from .config import Config
         app.config.from_object(Config)
         
+        # Ensure instance directory exists
+        os.makedirs(os.path.join(app.root_path, '..', 'instance'), exist_ok=True)
+        
         # Initialize database
         db.init_app(app)
         

@@ -7,13 +7,14 @@ class Config:
     # Database configuration
     basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     
-    # Default SQLite database path
+    # Default SQLite database path for development
     default_db_path = f'sqlite:///{os.path.join(basedir, "instance", "schedule.db")}'
     
-    # Get database URL from environment with SQLite as fallback
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', default_db_path)
-    if SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
-        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://')
+    # Use PostgreSQL in production (Render), SQLite in development
+    if os.environ.get('RENDER'):
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL').replace('postgres://', 'postgresql://')
+    else:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', default_db_path)
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
